@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 重新开始游戏按钮事件
     restartButton.addEventListener('click', () => {
         // 显示自定义确认弹窗，而不是使用confirm
-        showConfirmModal('确定要重新开始游戏吗？', '当前游戏进度将丢失。', () => {
+        showConfirmModal('确定要重新开始游戏吗', '当前游戏进度将丢失。', () => {
             // 确认后执行
             localStorage.removeItem('tapmeGameState');
             initGame();
