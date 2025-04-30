@@ -51,6 +51,7 @@ body {
 
 .container {
     flex: 1;
+    margin: 2rem;
     background-color: var(--container-bg);
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
@@ -827,4 +828,30 @@ button#restart-btn:hover {
 
 [data-theme="dark"] .modal-btn:not(.primary-btn):hover {
     background-color: #535353;
+}
+.cell.highlight2 {
+    position: relative; /* 为了定位小红点 */
+}
+.cell.highlight2::before {
+    content: '';
+    position: absolute;
+    top: 5px; /* 调整间距 */
+    left: 5px; /* 调整间距 */
+    background-color: #ff6f61; /* 柔和的红色 */
+    width: 8px;
+    height: 8px;
+    border-radius: 50%; /* 圆形小红点 */
+    box-shadow: 0 0 6px rgba(255, 111, 97, 0.5); /* 添加柔和的阴影效果 */
+    animation: pulseDot 2s infinite cubic-bezier(0.4, 0, 0.2, 1); /* 更自然的动画曲线 */
+}
+
+@keyframes pulseDot {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
 }

@@ -8,9 +8,10 @@ document.addEventListener('DOMContentLoaded', () => {
         isAnimating: false, // 动画进行中标记
         cellElements: [], // 存储DOM元素引用
         score: 0, // 积分
-        maxNumberInGame: 1, // 本局游戏中的最大数字
+        maxNumberInGame: 5, // 本局游戏中的最大数字
         isNewNumberRecord: false,
-        isNewScoreRecord: false
+        isNewScoreRecord: false,
+        hightFlag: 0
     };
 
     const gameBoard = document.getElementById('game-board');
@@ -117,6 +118,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // 创建或更新棋盘DOM
         createBoardDOM();
 
+        // 标注可消除的格子
+        highlightConnectedGroups(10);
+
         gameState.maxNumberInGame = 0;
         for (let i = 0; i < gameState.boardSize; i++) {
             for (let j = 0; j < gameState.boardSize; j++) {
@@ -129,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (existingModal) {
             document.body.removeChild(existingModal);
         }
+
     }
 
     // 更新点击次数显示和进度条
@@ -153,16 +158,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // 更新积分显示
     function updateScoreDisplay() {
         scoreElement.textContent = `积分: ${gameState.score}`;
+        updateRecordsDisplay();
     }
 
     // 更新历史记录显示
     function updateRecordsDisplay() {
-        const highestNumber = localStorage.getItem('tapmeHighestNumber') || 1;
+        const highestNumber = localStorage.getItem('tapmeHighestNumber') || 5;
         const highestScore = localStorage.getItem('tapmeHighestScore') || 0;
 
         recordsElement.innerHTML = `
-            <div>最高数字: ${highestNumber}</div>
-            <div>最高积分: ${highestScore}</div>
+            <div>最高数字: ${Math.max(highestNumber, gameState.maxNumberInGame)}</div>
+            <div>最高积分: ${Math.max(highestScore, gameState.score)}</div>
         `;
     }
 
@@ -273,6 +279,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (gameState.board[row][col] === null) return;
         if (gameState.maxNumberInGame <= gameState.board[row][col]) return;
+
+        // 清除之前的高亮
+        document.querySelectorAll('.highlight2').forEach(cell => {
+            cell.classList.remove('highlight2');
+        });
+        
         // 平滑增加点击的格子值，避免闪烁
         const oldValue = gameState.board[row][col];
         const newValue = oldValue + 1;
@@ -334,20 +346,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 // 开始检查
                 setTimeout(checkAnimationStatus, 300);
             }
+            highlightConnectedGroups(50)
         }, 150);
     }
 
-    // 检查并处理连通组
-    function processConnectedGroups(clickedRow, clickedCol) {
-        const connectedGroups = findAllConnectedGroups();
+    // // 检查并处理连通组
+    // function processConnectedGroups(clickedRow, clickedCol) {
+    //     const connectedGroups = findAllConnectedGroups();
 
-        if (connectedGroups.length > 0) {
-            gameState.isAnimating = true;
+    //     if (connectedGroups.length > 0) {
+    //         gameState.isAnimating = true;
 
-            // 依次处理连通组，而不是同时处理
-            processNextGroup(connectedGroups, 0, clickedRow, clickedCol);
-        }
-    }
+    //         // 依次处理连通组，而不是同时处理
+    //         processNextGroup(connectedGroups, 0, clickedRow, clickedCol);
+    //     }
+    // }
 
     // 递归处理连通组，一次处理一个
     function processNextGroup(groups, index, clickedRow, clickedCol) {
@@ -526,6 +539,46 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
     }
+    // 标注所有可消除的格子
+    function highlightConnectedGroups(time) {
+        if (gameState.isAnimating) return;
+
+        // 清除之前的高亮
+        document.querySelectorAll('.highlight2').forEach(cell => {
+            cell.classList.remove('highlight2');
+        });
+        
+        gameState.hightFlag = Date.now();
+        const dateNow = gameState.hightFlag;
+        setTimeout(() => {
+            if (dateNow == gameState.hightFlag) {
+                // 查找所有连通组
+                const connectedGroups = findAllConnectedGroups2();
+                // 为每个连通组的格子添加高亮
+                for (const group of connectedGroups) {
+                    const cellElement = gameState.cellElements[group.row][group.col];
+                    cellElement.classList.add('highlight2');
+                }
+            }
+        }, time);
+    }
+
+    // 在处理连通组时清除高亮
+    function processConnectedGroups(clickedRow, clickedCol) {
+        // 清除高亮
+        document.querySelectorAll('.highlight').forEach(cell => {
+            cell.classList.remove('highlight');
+        });
+
+        const connectedGroups = findAllConnectedGroups();
+
+        if (connectedGroups.length > 0) {
+            gameState.isAnimating = true;
+
+            // 依次处理连通组，而不是同时处理
+            processNextGroup(connectedGroups, 0, clickedRow, clickedCol);
+        }
+    }
 
     // 查找所有连通组
     function findAllConnectedGroups() {
@@ -580,6 +633,62 @@ document.addEventListener('DOMContentLoaded', () => {
         return groups;
     }
 
+    function visitedFlag() {
+        return Array(gameState.boardSize).fill().map(() => Array(gameState.boardSize).fill(false));
+    }
+
+    function findAllConnectedGroups2() {
+        const groups = [];
+
+        // 确保我们检查每个单元格
+        for (let i = 0; i < gameState.boardSize; i++) {
+            for (let j = 0; j < gameState.boardSize; j++) {
+                if (gameState.board[i][j] !== null) {
+                    const visited = visitedFlag();
+                    const group = [];
+                    const value = gameState.board[i][j]+1;
+
+                    // 使用队列进行广度优先搜索，更可靠地找出所有连通格子
+                    const queue = [{ row: i, col: j }];
+                    visited[i][j] = true;
+
+                    while (queue.length > 0) {
+                        const cell = queue.shift();
+                        group.push(cell);
+
+                        // 检查四个方向
+                        const directions = [
+                            { row: cell.row - 1, col: cell.col }, // 上
+                            { row: cell.row + 1, col: cell.col }, // 下
+                            { row: cell.row, col: cell.col - 1 }, // 左
+                            { row: cell.row, col: cell.col + 1 }  // 右
+                        ];
+
+                        for (const dir of directions) {
+                            const { row, col } = dir;
+
+                            // 检查边界和是否已访问
+                            if (row >= 0 && row < gameState.boardSize &&
+                                col >= 0 && col < gameState.boardSize &&
+                                !visited[row][col] &&
+                                gameState.board[row][col] === value) {
+                                visited[row][col] = true;
+                                queue.push({ row, col });
+                            }
+                        }
+                    }
+
+                    if (group.length >= 3) {
+                        groups.push({row: i, col: j});
+                    }
+                }
+            }
+        }
+
+        return groups;
+    }
+
+
     // 检查是否存在连通组
     function hasConnectedGroups() {
         return findAllConnectedGroups().length > 0;
@@ -590,6 +699,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let hasFalling = false;
         const movingCells = [];
         const newCells = [];
+        // 清除之前的高亮
+        document.querySelectorAll('.highlight2').forEach(cell => {
+            cell.classList.remove('highlight2');
+        });
 
         // 从底部向上处理下落
         for (let col = 0; col < gameState.boardSize; col++) {
@@ -712,6 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             // 没有新的连通组，结束动画状态
             gameState.isAnimating = false;
+            highlightConnectedGroups(500);
             // 保存最终状态
             saveGameState();
         }
