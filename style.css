@@ -837,12 +837,12 @@ button#restart-btn:hover {
     position: absolute;
     top: 5px; /* 调整间距 */
     left: 5px; /* 调整间距 */
-    background-color: #ff6f61; /* 柔和的红色 */
+    background-color: #4caf50; /* 柔和的红色 */
     width: 8px;
     height: 8px;
     border-radius: 50%; /* 圆形小红点 */
-    box-shadow: 0 0 6px rgba(255, 111, 97, 0.5); /* 添加柔和的阴影效果 */
-    animation: pulseDot 2s infinite cubic-bezier(0.4, 0, 0.2, 1); /* 更自然的动画曲线 */
+    box-shadow: 0 0 5px #6dd170; /* 添加柔和的阴影效果 */
+    /* animation: pulseDot 2s infinite cubic-bezier(0.4, 0, 0.2, 1);  */
 }
 
 @keyframes pulseDot {
