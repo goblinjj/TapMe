@@ -50,8 +50,8 @@ body {
 }
 
 .container {
-    /* flex: 0.9; */
-    margin-top: -5vh;
+    flex: 1;
+    /* margin-top: -5vh; */
     background-color: var(--container-bg);
     border-radius: 10px;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
