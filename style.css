@@ -43,6 +43,7 @@ body {
     min-height: 100vh;
     color: var(--text-color);
     margin: 0;
+    overflow: hidden; /* 禁止上下滑动 */
     transition: background-color 0.3s ease;
 }
 
